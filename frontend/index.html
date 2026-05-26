@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Azure Model Availability</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Azure Model Availability</h1>
+    <div class="status" id="status">Loading…</div>
+  </header>
+
+  <section class="controls">
+    <div class="row">
+      <label>Subscription
+        <select id="subscription"></select>
+      </label>
+      <label>Mode
+        <select id="mode">
+          <option value="single">Single region</option>
+          <option value="compare">Compare two regions</option>
+        </select>
+      </label>
+      <label>Region A
+        <select id="regionA"></select>
+      </label>
+      <label class="region-b-wrap" style="display:none">Region B
+        <select id="regionB"></select>
+      </label>
+      <button id="load">Load models</button>
+    </div>
+    <div class="row">
+      <input id="search" type="search" placeholder="Search by name, publisher, version…" />
+      <div class="chips" id="caps"></div>
+      <button id="exportCsv" class="secondary">Export CSV</button>
+    </div>
+  </section>
+
+  <main>
+    <div class="pane" id="paneA">
+      <h2 id="titleA">Region A</h2>
+      <div class="summary" id="summaryA"></div>
+      <div class="tableWrap"><table id="tableA"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="pane" id="paneB" style="display:none">
+      <h2 id="titleB">Region B</h2>
+      <div class="summary" id="summaryB"></div>
+      <div class="tableWrap"><table id="tableB"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="pane" id="paneDiff" style="display:none">
+      <h2>Diff</h2>
+      <div id="diff"></div>
+    </div>
+  </main>
+
+  <aside id="drawer" class="drawer hidden">
+    <div class="drawerHead">
+      <strong id="drawerTitle">Details</strong>
+      <button id="closeDrawer">&times;</button>
+    </div>
+    <pre id="drawerBody"></pre>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>
