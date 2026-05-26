@@ -8,7 +8,7 @@ search, capability filters, region-vs-region diff, quota lookup, and CSV export.
 +--------------+      Bearer token       +-------------------------+
 |  index.html  | <---->  FastAPI  <----> |  management.azure.com   |
 |  app.js      |        backend          |  ARM REST APIs          |
-+--------------+   (DefaultAzureCredential)  +-----------------------+
++--------------+    (az CLI token)       +-------------------------+
 ```
 
 ## What it queries
@@ -91,6 +91,26 @@ If you get 401s, run `az account get-access-token --resource https://management.
 Server-side responses are cached in-memory for 5 minutes
 (`CACHE_TTL` env var to tweak). Restart the process to bust the cache.
 
+## Configuration
+
+All settings are optional environment variables (loaded from `.env` if present).
+Copy `.env.example` to `.env` and edit as needed.
+
+| Variable              | Default                          | Purpose                                  |
+| --------------------- | -------------------------------- | ---------------------------------------- |
+| `HOST`                | `127.0.0.1`                      | Bind address                             |
+| `PORT`                | `8765`                           | HTTP port                                |
+| `LOG_LEVEL`           | `INFO`                           | DEBUG/INFO/WARNING/ERROR                 |
+| `CACHE_TTL`           | `300`                            | Cache lifetime, seconds                  |
+| `HTTP_TIMEOUT`        | `60`                             | httpx timeout, seconds                   |
+| `ARM_ENDPOINT`        | `https://management.azure.com`   | Sovereign cloud override                 |
+| `ARM_RESOURCE`        | `https://management.azure.com`   | Token audience for sovereign cloud       |
+| `API_COGSVC`          | `2024-10-01`                     | CognitiveServices `models`/`usages` api-version |
+| `API_COGSVC_FALLBACK` | `2023-05-01`                     | Used when a region rejects the primary version |
+| `API_AML`             | `2024-10-01-preview`             | MachineLearningServices `registries` api-version |
+| `API_SUBSCRIPTIONS`   | `2022-12-01`                     |                                          |
+| `API_LOCATIONS`       | `2022-12-01`                     |                                          |
+
 ## API surface (proxied through the backend)
 
 | Method | Path                                                          |
@@ -122,12 +142,14 @@ tools/model-availability-dashboard/
 ├── backend/
 │   ├── __init__.py
 │   ├── arm_client.py        # async ARM REST client w/ caching + paging
+│   ├── config.py            # env-driven settings
 │   ├── main.py              # FastAPI app, serves frontend + /api/*
 │   └── requirements.txt
 ├── frontend/
 │   ├── index.html
 │   ├── app.js
 │   └── styles.css
+├── .env.example
 ├── run.ps1
 ├── run.sh
 ├── .gitignore

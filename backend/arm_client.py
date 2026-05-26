@@ -23,15 +23,17 @@ from typing import Any
 
 import httpx
 
-ARM = "https://management.azure.com"
-ARM_RESOURCE = "https://management.azure.com"
+from .config import settings
 
-API_SUBSCRIPTIONS = "2022-12-01"
-API_LOCATIONS = "2022-12-01"
-API_COGSVC = "2024-10-01"
+ARM = settings.arm_endpoint
+ARM_RESOURCE = settings.arm_resource
+
+API_SUBSCRIPTIONS = settings.api_subscriptions
+API_LOCATIONS = settings.api_locations
+API_COGSVC = settings.api_cogsvc
 # Some regions don't yet expose the stable api-version for models; we'll retry with this preview.
-API_COGSVC_FALLBACK = "2023-05-01"
-API_AML = "2024-10-01-preview"
+API_COGSVC_FALLBACK = settings.api_cogsvc_fallback
+API_AML = settings.api_aml
 
 
 class AzCliAuthError(RuntimeError):
@@ -67,12 +69,12 @@ async def _get_token_via_az() -> tuple[str, float]:
 
 
 class ArmClient:
-    def __init__(self, cache_ttl: int = 300):
-        self._client = httpx.AsyncClient(timeout=60.0)
+    def __init__(self, cache_ttl: int | None = None):
+        self._client = httpx.AsyncClient(timeout=settings.http_timeout)
         self._token: str | None = None
         self._token_exp: float = 0.0
         self._cache: dict[str, tuple[float, Any]] = {}
-        self._cache_ttl = cache_ttl
+        self._cache_ttl = cache_ttl if cache_ttl is not None else settings.cache_ttl
         self._lock = asyncio.Lock()
 
     async def close(self):

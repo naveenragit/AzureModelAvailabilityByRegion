@@ -8,28 +8,30 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .arm_client import ArmClient
+from .config import settings
 
+logging.basicConfig(
+    level=getattr(logging, settings.log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 log = logging.getLogger("dashboard")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.arm = ArmClient(cache_ttl=int(os.environ.get("CACHE_TTL", "300")))
-    log.info("ArmClient initialized")
+    app.state.arm = ArmClient(cache_ttl=settings.cache_ttl)
+    log.info("ArmClient initialized (cache_ttl=%ss, endpoint=%s)", settings.cache_ttl, settings.arm_endpoint)
     try:
         yield
     finally:
@@ -186,3 +188,19 @@ if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 else:
     log.warning("Frontend dir not found at %s", FRONTEND_DIR)
+
+
+def main() -> None:
+    """CLI entry: `python -m backend.main` honors HOST/PORT/LOG_LEVEL env vars."""
+    import uvicorn
+
+    uvicorn.run(
+        "backend.main:app",
+        host=settings.host,
+        port=settings.port,
+        log_level=settings.log_level.lower(),
+    )
+
+
+if __name__ == "__main__":
+    main()
