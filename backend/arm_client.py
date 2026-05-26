@@ -136,15 +136,25 @@ class ArmClient:
             f"{ARM}/subscriptions/{sub}/locations",
             params={"api-version": API_LOCATIONS},
         )
-        return [
-            {
-                "name": loc["name"],
-                "displayName": loc.get("displayName"),
-                "regionalDisplayName": loc.get("regionalDisplayName"),
-                "geography": (loc.get("metadata") or {}).get("geographyGroup"),
-            }
-            for loc in data["value"]
-        ]
+        out = []
+        for loc in data["value"]:
+            md = loc.get("metadata") or {}
+            out.append(
+                {
+                    "name": loc["name"],
+                    "displayName": loc.get("displayName"),
+                    "regionalDisplayName": loc.get("regionalDisplayName"),
+                    "geography": md.get("geographyGroup"),
+                    # Physical city, e.g. "Singapore" for southeastasia, "Hong Kong" for eastasia.
+                    "physicalLocation": md.get("physicalLocation"),
+                    "regionType": md.get("regionType"),  # Physical | Logical
+                    "regionCategory": md.get("regionCategory"),  # Recommended | Other
+                    "pairedRegion": [
+                        p.get("name") for p in (md.get("pairedRegion") or []) if p.get("name")
+                    ],
+                }
+            )
+        return out
 
     async def list_cogsvc_models(self, sub: str, location: str) -> list[dict]:
         url = f"{ARM}/subscriptions/{sub}/providers/Microsoft.CognitiveServices/locations/{location}/models"

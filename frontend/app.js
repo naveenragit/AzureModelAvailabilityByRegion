@@ -48,6 +48,15 @@ async function init() {
   }
 }
 
+// Region label is built entirely from live Azure /locations metadata so any new
+// region automatically picks up its display name + city without code changes.
+// Format: "Southeast Asia (southeastasia) — Singapore"
+function regionLabel(loc) {
+  const display = loc.displayName || loc.name;
+  const city = loc.physicalLocation;
+  return city ? `${display} (${loc.name}) — ${city}` : `${display} (${loc.name})`;
+}
+
 async function loadLocations() {
   const sub = $("subscription").value;
   if (!sub) return;
@@ -55,8 +64,13 @@ async function loadLocations() {
   state.locations = await api(`/api/subscriptions/${sub}/locations`);
   const opts = state.locations
     .filter((l) => !l.name.startsWith("euap") && !l.name.includes("stage"))
+    .filter((l) => !l.regionType || l.regionType === "Physical")
     .sort((a, b) => (a.displayName || a.name).localeCompare(b.displayName || b.name))
-    .map((l) => `<option value="${l.name}">${l.displayName || l.name} (${l.name})</option>`)
+    .map((l) => {
+      const label = regionLabel(l);
+      const title = l.regionalDisplayName || label;
+      return `<option value="${l.name}" title="${title}">${label}</option>`;
+    })
     .join("");
   $("regionA").innerHTML = opts;
   $("regionB").innerHTML = opts;
